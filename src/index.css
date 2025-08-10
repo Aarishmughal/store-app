@@ -1,0 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Oswald:wght@200..700&display=swap");
+
+:root {
+    --heading-font: "Oswald", "Times New Roman", serif;
+    --body-font: "Inter", "Arial", sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--heading-font);
+    text-transform: uppercase;
+}
+p,
+label,
+input,
+a,
+button,
+span,
+div {
+    font-family: var(--body-font);
+}
