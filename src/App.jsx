@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "./App.css";
 import FormField from "./components/FormField";
+import { getSalesSlipTemplate } from "./salesSlipTemplate";
+import { getSalesSlipPdfTemplate } from "./salesSlipPdfTemplate";
 
 const SHIRT_COST = 500;
 function App() {
@@ -77,21 +79,7 @@ function App() {
     const handleGetSlip = (e) => {
         e.preventDefault();
         const profit = calculateProfit();
-        const totalSalesSum = Array.isArray(details.totalSales)
-            ? details.totalSales.reduce((acc, val) => acc + Number(val), 0)
-            : Number(details.totalSales);
-        setResult(
-            `${details.title}
-(*${details.startDate}* - *${details.endDate}*)
-            --------------------------
-            Total Sales: PKR ${totalSalesSum}
-            Total Ads Spent: PKR ${details.totalAdsSpent}
-            Total Shirts Cost: PKR ${details.totalShirtsCost}
-            Total Delivery Cost: PKR ${details.totalDeliveryCost}
-            Total Print Cost: PKR ${details.totalPrintCost}
-            --------------------------
-            Total Profit: PKR ${profit}`
-        );
+        setResult(getSalesSlipTemplate(details, profit));
     };
 
     // Handler to copy the slip to clipboard
@@ -99,6 +87,18 @@ function App() {
         e.preventDefault();
         handleGetSlip(e);
         navigator.clipboard.writeText(result);
+    };
+
+    const handlePrintPdf = () => {
+        // Calculate profit and prepare data for PDF
+        const profit = calculateProfit();
+        const pdfHtml = getSalesSlipPdfTemplate(profit, details);
+        const printWindow = window.open("", "", "width=1000,height=800");
+        printWindow.document.write(pdfHtml);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
     };
 
     return (
@@ -341,10 +341,16 @@ function App() {
                             Get Slip
                         </button>
                         <button
-                            className="btn btn-secondary"
+                            className="btn btn-success me-2"
                             onClick={handleCopySlip}
                         >
                             <i class="bi bi-copy"></i>
+                        </button>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={handlePrintPdf}
+                        >
+                            <i className="bi bi-filetype-pdf"></i>
                         </button>
                     </div>
                     <div className="card-footer">
