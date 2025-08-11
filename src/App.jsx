@@ -7,7 +7,7 @@ import { getSalesSlipPdfTemplate } from "./salesSlipPdfTemplate";
 const SHIRT_COST = 500;
 function App() {
     const [details, setDetails] = useState({
-        title: `URGENT Sales Slip`,
+        title: `Sales Slip`,
         startDate: `${Date.now()}`,
         endDate: `${Date.now()}`,
         totalSales: [],
