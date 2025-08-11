@@ -22,6 +22,7 @@ function App() {
         totalPayable: 0,
     });
     const [result, setResult] = useState("Result will be shown here...");
+    const [salesHistory, setSalesHistory] = useState([]);
 
     const handleInputChange = (e) => {
         const { name, value, type } = e.target;
@@ -40,6 +41,8 @@ function App() {
     };
 
     const calculateTotalSales = () => {
+        // Save the current sale to salesHistory before updating details
+        setSalesHistory((prevHistory) => [...prevHistory, sale]);
         setDetails((prevDetails) => ({
             ...prevDetails,
             totalSales: [...prevDetails.totalSales, sale.totalPayable],
@@ -92,13 +95,12 @@ function App() {
     const handlePrintPdf = () => {
         // Calculate profit and prepare data for PDF
         const profit = calculateProfit();
-        const pdfHtml = getSalesSlipPdfTemplate(profit, details);
-        const printWindow = window.open("", "", "width=1000,height=800");
+        const pdfHtml = getSalesSlipPdfTemplate(profit, details, salesHistory);
+        const printWindow = window.open("", "", "width=800,height=600");
         printWindow.document.write(pdfHtml);
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
-        printWindow.close();
     };
 
     return (

@@ -6,6 +6,11 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
     const totalSalesSum = Array.isArray(details.totalSales)
         ? details.totalSales.reduce((acc, val) => acc + Number(val), 0)
         : Number(details.totalSales);
+    const round = (val) =>
+        Number(val).toLocaleString("en-PK", {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+        });
     // Render each sale as a row
     let salesRows = "";
     if (Array.isArray(sales) && sales.length > 0) {
@@ -16,7 +21,7 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
                 <td>${idx + 1}</td>
                 <td>${sale.orderNumber || ""}</td>
                 <td>${sale.shirtsCount || ""}</td>
-                <td>PKR ${sale.totalPayable || ""}</td>
+                    <td>PKR ${round(sale.totalPayable || 0)}</td>
             </tr>
         `
             )
@@ -33,7 +38,7 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 40px;
             background-color: #fafafa;
-            font-size: 16px; /* Increased base size */
+            font-size: 16px;
         }
         .sales-slip {
             border: 1px solid #ccc;
@@ -46,13 +51,13 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
         h2 {
             text-align: center;
             margin-bottom: 15px;
-            font-size: 1.7em; /* Increased from 1.5em */
+            font-size: 1.7em;
         }
         .meta-table, .details-table {
             border-collapse: collapse;
             width: 100%;
             margin-bottom: 20px;
-            font-size: 1.05em; /* Slight bump */
+            font-size: 1.05em;
         }
         th, td {
             border: 1px solid #ddd;
@@ -93,27 +98,35 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
             </tr>
             <tr>
                 <td>Total Sales</td>
-                <td class="currency">PKR ${totalSalesSum}</td>
+                    <td class="currency">PKR ${round(totalSalesSum)}</td>
             </tr>
             <tr>
                 <td>Total Ads Spent</td>
-                <td class="currency">PKR ${details.totalAdsSpent}</td>
+                    <td class="currency">PKR ${round(
+                        details.totalAdsSpent
+                    )}</td>
             </tr>
             <tr>
                 <td>Total Shirts Cost</td>
-                <td class="currency">PKR ${details.totalShirtsCost}</td>
+                    <td class="currency">PKR ${round(
+                        details.totalShirtsCost
+                    )}</td>
             </tr>
             <tr>
                 <td>Total Delivery Cost</td>
-                <td class="currency">PKR ${details.totalDeliveryCost}</td>
+                    <td class="currency">PKR ${round(
+                        details.totalDeliveryCost
+                    )}</td>
             </tr>
             <tr>
                 <td>Total Print Cost</td>
-                <td class="currency">PKR ${details.totalPrintCost}</td>
+                    <td class="currency">PKR ${round(
+                        details.totalPrintCost
+                    )}</td>
             </tr>
             <tr class="total-row">
                 <td>Total Profit</td>
-                <td class="currency">PKR ${totalProfit}</td>
+                    <td class="currency">PKR ${round(totalProfit)}</td>
             </tr>
         </table>
 
