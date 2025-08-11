@@ -2,10 +2,8 @@
     transition: all 0.2s ease-in-out !important;
 }
 .btn:hover {
-    transform: rotate(2deg) !important;
     filter: brightness(0.9) !important;
 }
 .btn:active {
-    transform: rotate(2deg) !important;
     filter: brightness(0.4) !important;
 }

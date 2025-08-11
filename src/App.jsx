@@ -1,16 +1,23 @@
 import { useState } from "react";
 import "./App.css";
+import FormField from "./components/FormField";
 
+const SHIRT_COST = 500;
 function App() {
     const [details, setDetails] = useState({
-        title: "",
-        startDate: "",
-        endDate: "",
-        totalSales: 0,
+        title: `URGENT Sales Slip`,
+        startDate: `${Date.now()}`,
+        endDate: `${Date.now()}`,
+        totalSales: [],
         totalAdsSpent: 0,
         totalShirtsCost: 0,
         totalDeliveryCost: 0,
         totalPrintCost: 0,
+    });
+    const [sale, setSale] = useState({
+        orderNumber: 0,
+        shirtsCount: 0,
+        totalPayable: 0,
     });
     const [result, setResult] = useState("Result will be shown here...");
 
@@ -22,6 +29,31 @@ function App() {
         }));
     };
 
+    const handleSaleChange = (e) => {
+        const { name, value, type } = e.target;
+        setSale((prevDetails) => ({
+            ...prevDetails,
+            [name]: type === "number" ? Number(value) : value,
+        }));
+    };
+
+    const calculateTotalSales = () => {
+        setDetails((prevDetails) => ({
+            ...prevDetails,
+            totalSales: [...prevDetails.totalSales, sale.totalPayable],
+        }));
+        setDetails((prevDetails) => ({
+            ...prevDetails,
+            totalShirtsCost:
+                prevDetails.totalShirtsCost + sale.shirtsCount * SHIRT_COST,
+        }));
+        setSale({
+            orderNumber: 0,
+            shirtsCount: 0,
+            totalPayable: 0,
+        });
+    };
+
     const calculateProfit = () => {
         const {
             totalSales,
@@ -30,8 +62,11 @@ function App() {
             totalDeliveryCost,
             totalPrintCost,
         } = details;
+        const totalSalesSum = Array.isArray(totalSales)
+            ? totalSales.reduce((acc, val) => acc + Number(val), 0)
+            : Number(totalSales);
         return (
-            Number(totalSales) -
+            totalSalesSum -
             Number(totalAdsSpent) -
             Number(totalShirtsCost) -
             Number(totalDeliveryCost) -
@@ -42,11 +77,14 @@ function App() {
     const handleGetSlip = (e) => {
         e.preventDefault();
         const profit = calculateProfit();
+        const totalSalesSum = Array.isArray(details.totalSales)
+            ? details.totalSales.reduce((acc, val) => acc + Number(val), 0)
+            : Number(details.totalSales);
         setResult(
             `${details.title}
 (*${details.startDate}* - *${details.endDate}*)
             --------------------------
-            Total Sales: PKR ${details.totalSales}
+            Total Sales: PKR ${totalSalesSum}
             Total Ads Spent: PKR ${details.totalAdsSpent}
             Total Shirts Cost: PKR ${details.totalShirtsCost}
             Total Delivery Cost: PKR ${details.totalDeliveryCost}
@@ -59,14 +97,15 @@ function App() {
     // Handler to copy the slip to clipboard
     const handleCopySlip = (e) => {
         e.preventDefault();
+        handleGetSlip(e);
         navigator.clipboard.writeText(result);
     };
 
     return (
         <>
-            <div className="container d-flex justify-content-center align-items-center vh-100">
+            <div className="container d-flex justify-content-center align-items-start vh-100 overflow-y-auto pt-5">
                 <div
-                    className="card shadow-lg"
+                    className="card shadow-sm"
                     style={{ maxWidth: "700px", minWidth: "300px" }}
                 >
                     <h1 className="card-header text-center">
@@ -75,144 +114,204 @@ function App() {
                     <div className="card-body">
                         <div className="row g-3 mb-3">
                             <div className="col-12">
-                                <div className="input-group">
-                                    <span className="input-group-text">
-                                        Title of Slip
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="text"
-                                        name="title"
-                                        value={details.title}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
+                                <FormField
+                                    label="Title of Slip"
+                                    type="text"
+                                    name="title"
+                                    value={details.title}
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <div className="row g-3 mb-3">
                             <div className="col-lg-6 col-sm-12">
-                                <div className="input-group">
-                                    <span className="input-group-text">
-                                        Start Date
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="date"
-                                        name="startDate"
-                                        value={details.startDate}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
+                                <FormField
+                                    label="Start Date"
+                                    type="date"
+                                    name="startDate"
+                                    value={details.startDate}
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                             <div className="col-lg-6 col-sm-12">
-                                <div className="input-group">
-                                    <span className="input-group-text">
-                                        End Date
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="date"
-                                        name="endDate"
-                                        value={details.endDate}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
+                                <FormField
+                                    label="End Date"
+                                    type="date"
+                                    name="endDate"
+                                    value={details.endDate}
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <hr />
-                        <div className="row g-3 mb-3">
-                            <div className="col-12">
-                                <div className="input-group">
-                                    <span className="input-group-text text-success">
-                                        Total Sales
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="number"
-                                        name="totalSales"
-                                        value={details.totalSales}
-                                        onChange={handleInputChange}
-                                    />
-                                    <span className="input-group-text">
-                                        PKR
-                                    </span>
+                        <button
+                            className="btn btn-success mb-3 w-100"
+                            data-bs-toggle="modal"
+                            data-bs-target="#salesModal"
+                        >
+                            Add Sales
+                        </button>
+                        <div
+                            class="modal fade"
+                            id="salesModal"
+                            tabindex="-1"
+                            aria-labelledby="salesModalLabel"
+                            aria-hidden="true"
+                        >
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1
+                                            class="modal-title fs-5"
+                                            id="salesModalLabel"
+                                        >
+                                            Add Sales
+                                        </h1>
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"
+                                        ></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-12">
+                                                <FormField
+                                                    label="Order No."
+                                                    type="text"
+                                                    name="orderNumber"
+                                                    value={
+                                                        sale.orderNumber || ""
+                                                    }
+                                                    handleInputChange={
+                                                        handleSaleChange
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-12">
+                                                <FormField
+                                                    label="Shirts Count"
+                                                    type="number"
+                                                    name="shirtsCount"
+                                                    value={
+                                                        sale.shirtsCount || ""
+                                                    }
+                                                    handleInputChange={
+                                                        handleSaleChange
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-12">
+                                                <FormField
+                                                    label="Total Payable"
+                                                    type="number"
+                                                    name="totalPayable"
+                                                    value={
+                                                        sale.totalPayable || ""
+                                                    }
+                                                    handleInputChange={
+                                                        handleSaleChange
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary"
+                                            data-bs-dismiss="modal"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary"
+                                            data-bs-dismiss="modal"
+                                            onClick={calculateTotalSales}
+                                        >
+                                            Save changes
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div className="row g-3 mb-3">
                             <div className="col-12">
-                                <div className="input-group">
-                                    <span className="input-group-text text-danger">
-                                        Total Ads Spent
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="number"
-                                        name="totalAdsSpent"
-                                        value={details.totalAdsSpent}
-                                        onChange={handleInputChange}
-                                    />
-                                    <span className="input-group-text">
-                                        PKR
-                                    </span>
-                                </div>
+                                <FormField
+                                    label="Total Sales"
+                                    type="number"
+                                    className="text-info"
+                                    name="totalSales"
+                                    value={
+                                        Array.isArray(details.totalSales)
+                                            ? details.totalSales.reduce(
+                                                  (acc, val) =>
+                                                      acc + Number(val),
+                                                  0
+                                              )
+                                            : details.totalSales
+                                    }
+                                    currency="PKR"
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <div className="row g-3 mb-3">
                             <div className="col-12">
-                                <div className="input-group">
-                                    <span className="input-group-text text-danger">
-                                        Total Shirts Cost
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="number"
-                                        name="totalShirtsCost"
-                                        value={details.totalShirtsCost}
-                                        onChange={handleInputChange}
-                                    />
-                                    <span className="input-group-text">
-                                        PKR
-                                    </span>
-                                </div>
+                                <FormField
+                                    label="Ads Spent"
+                                    type="number"
+                                    className="text-danger"
+                                    name="totalAdsSpent"
+                                    value={details.totalAdsSpent}
+                                    currency="PKR"
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <div className="row g-3 mb-3">
                             <div className="col-12">
-                                <div className="input-group">
-                                    <span className="input-group-text text-warning">
-                                        Total Delivery Cost
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="number"
-                                        name="totalDeliveryCost"
-                                        value={details.totalDeliveryCost}
-                                        onChange={handleInputChange}
-                                    />
-                                    <span className="input-group-text">
-                                        PKR
-                                    </span>
-                                </div>
+                                <FormField
+                                    label="Shirts Cost"
+                                    type="number"
+                                    className="text-danger"
+                                    name="totalShirtsCost"
+                                    value={details.totalShirtsCost}
+                                    currency="PKR"
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <div className="row g-3 mb-3">
                             <div className="col-12">
-                                <div className="input-group">
-                                    <span className="input-group-text text-warning">
-                                        Total Print Cost
-                                    </span>
-                                    <input
-                                        className="form-control"
-                                        type="number"
-                                        name="totalPrintCost"
-                                        value={details.totalPrintCost}
-                                        onChange={handleInputChange}
-                                    />
-                                    <span className="input-group-text">
-                                        PKR
-                                    </span>
-                                </div>
+                                <FormField
+                                    label="Total Delivery Cost"
+                                    type="number"
+                                    className="text-warning"
+                                    name="totalDeliveryCost"
+                                    value={details.totalDeliveryCost}
+                                    currency="PKR"
+                                    handleInputChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+                        <div className="row g-3 mb-3">
+                            <div className="col-12">
+                                <FormField
+                                    label="Print Cost"
+                                    type="number"
+                                    className="text-warning"
+                                    name="totalPrintCost"
+                                    value={details.totalPrintCost}
+                                    currency="PKR"
+                                    handleInputChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <hr />
@@ -245,12 +344,12 @@ function App() {
                             className="btn btn-secondary"
                             onClick={handleCopySlip}
                         >
-                            Copy Slip to Clipboard
+                            <i class="bi bi-copy"></i>
                         </button>
                     </div>
                     <div className="card-footer">
                         <textarea
-                            className="form-control"
+                            className="form-control text-muted"
                             rows="5"
                             value={result}
                             readOnly
