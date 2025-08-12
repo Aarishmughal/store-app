@@ -1,12 +1,8 @@
-// salesSlipPdfTemplate.js
-// Exports a function that returns the HTML for the printable PDF slip
 import round from "./utils/round";
 export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
-  // Calculate total sales sum if it's an array
   const totalSalesSum = Array.isArray(details.totalSales)
     ? details.totalSales.reduce((acc, val) => acc + Number(val), 0)
     : Number(details.totalSales);
-  // Render each sale as a row
   let salesRows = "";
   if (Array.isArray(sales) && sales.length > 0) {
     salesRows = sales
