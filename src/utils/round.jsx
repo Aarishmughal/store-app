@@ -1,6 +1,5 @@
-export default function round(val) {
-  Number(val).toLocaleString("en-PK", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  });
+export default function round(value) {
+  const num = Number(value);
+  if (isNaN(num)) return "";
+  return Math.round(num * 100) / 100;
 }
