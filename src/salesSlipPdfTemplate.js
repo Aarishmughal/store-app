@@ -1,22 +1,17 @@
 // salesSlipPdfTemplate.js
 // Exports a function that returns the HTML for the printable PDF slip
-
+import round from "./utils/round";
 export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
-    // Calculate total sales sum if it's an array
-    const totalSalesSum = Array.isArray(details.totalSales)
-        ? details.totalSales.reduce((acc, val) => acc + Number(val), 0)
-        : Number(details.totalSales);
-    const round = (val) =>
-        Number(val).toLocaleString("en-PK", {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-        });
-    // Render each sale as a row
-    let salesRows = "";
-    if (Array.isArray(sales) && sales.length > 0) {
-        salesRows = sales
-            .map(
-                (sale, idx) => `
+  // Calculate total sales sum if it's an array
+  const totalSalesSum = Array.isArray(details.totalSales)
+    ? details.totalSales.reduce((acc, val) => acc + Number(val), 0)
+    : Number(details.totalSales);
+  // Render each sale as a row
+  let salesRows = "";
+  if (Array.isArray(sales) && sales.length > 0) {
+    salesRows = sales
+      .map(
+        (sale, idx) => `
             <tr>
                 <td>${idx + 1}</td>
                 <td>${sale.orderNumber || ""}</td>
@@ -24,12 +19,12 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
                     <td>PKR ${round(sale.totalPayable || 0)}</td>
             </tr>
         `
-            )
-            .join("");
-    } else {
-        salesRows = '<tr><td colspan="4">No sales data</td></tr>';
-    }
-    return `
+      )
+      .join("");
+  } else {
+    salesRows = '<tr><td colspan="4">No sales data</td></tr>';
+  }
+  return `
 <html>
 <head>
     <title>Sales Slip PDF</title>
@@ -103,25 +98,25 @@ export function getSalesSlipPdfTemplate(totalProfit, details, sales) {
             <tr>
                 <td>Total Ads Spent</td>
                     <td class="currency">PKR ${round(
-                        details.totalAdsSpent
+                      details.totalAdsSpent
                     )}</td>
             </tr>
             <tr>
                 <td>Total Shirts Cost</td>
                     <td class="currency">PKR ${round(
-                        details.totalShirtsCost
+                      details.totalShirtsCost
                     )}</td>
             </tr>
             <tr>
                 <td>Total Delivery Cost</td>
                     <td class="currency">PKR ${round(
-                        details.totalDeliveryCost
+                      details.totalDeliveryCost
                     )}</td>
             </tr>
             <tr>
                 <td>Total Print Cost</td>
                     <td class="currency">PKR ${round(
-                        details.totalPrintCost
+                      details.totalPrintCost
                     )}</td>
             </tr>
             <tr class="total-row">

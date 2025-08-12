@@ -1,5 +1,5 @@
 .btn {
-    transition: all 0.2s ease-in-out !important;
+    transition: all 0.1s ease-in-out !important;
 }
 .btn:hover {
     filter: brightness(0.9) !important;

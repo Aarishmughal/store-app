@@ -1,24 +1,28 @@
-export function getSalesSlipTemplate(details, profit) {
-    return `
-==============================
-        SALES SLIP
-==============================
-Title       : ${details.title}
-Period      : ${details.startDate} → ${details.endDate}
+export function getSalesSlipTemplate(
+    details,
+    profit,
+    shopifyFee,
+    safetyDeposit,
+    claimableProfit
+) {
+    return `📄 *Sales Slip*
 
-------------------------------
-Financial Summary
-------------------------------
-Total Sales       : PKR ${details.totalSales}
-Ads Spent         : PKR ${details.totalAdsSpent}
-Shirts Cost       : PKR ${details.totalShirtsCost}
-Delivery Cost     : PKR ${details.totalDeliveryCost}
-Print Cost        : PKR ${details.totalPrintCost}
+📝 *Title:* ${details.title}
+📅 *Period:* ${details.startDate} → ${details.endDate}
 
-------------------------------
-TOTAL PROFIT      : ***PKR ${profit}***
-==============================
-       _This sales receipt may or may not be updated in the future._
-==============================
+💰 *Financial Summary*
+• Total Sales: PKR ${details.totalSales}
+• Ads Spent: PKR ${details.totalAdsSpent}
+• Shirts Cost: PKR ${details.totalShirtsCost}
+• Delivery Cost: PKR ${details.totalDeliveryCost}
+• Print Cost: PKR ${details.totalPrintCost}
+
+💵 *Profit:* PKR ${profit}
+🏷 *Shopify Fee:* PKR ${shopifyFee}
+💳 *Safety Deposit:* PKR ${safetyDeposit}
+
+✅ *Total Claimable Profit:* PKR ${claimableProfit}
+
+_This sales receipt may or may not be updated in the future._
 `;
 }
