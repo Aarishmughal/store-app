@@ -2,15 +2,20 @@ import { useState } from "react";
 import "./App.css";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import FormField from "./components/FormField";
-import { SHIRT_COST, SHOPIFY_FEE_PERCENTAGE, SAFETY_DEPOSIT_PERCENTAGE } from "./constants";
+import { SHIRT_COST, SHOPIFY_FEE_PER_DAY, SAFETY_DEPOSIT_PERCENTAGE } from "./constants";
 import { getSalesSlipTemplate } from "./salesSlipTemplate";
 import { getSalesSlipPdfTemplate } from "./salesSlipPdfTemplate";
 import round from "./utils/round";
+import getToday from "./utils/getToday";
+import getTotalDays from "./utils/getTotalDays";
+import SaleText from "./components/SaleText";
+import AddSale from "./components/AddSale";
+import ViewSales from "./components/ViewSales";
 function App() {
   const [details, setDetails] = useState({
     title: `Sales Slip`,
-    startDate: `${Date.now()}`,
-    endDate: `${Date.now()}`,
+    startDate: getToday(),
+    endDate: getToday(),
     totalSales: [],
     totalAdsSpent: 0,
     totalShirtsCost: 0,
@@ -58,7 +63,7 @@ function App() {
     });
   };
   const calculateShopifyFee = () => {
-    return calculateProfit() * SHOPIFY_FEE_PERCENTAGE;
+    return SHOPIFY_FEE_PER_DAY * getTotalDays(details.startDate, details.endDate);
   };
   const calculateSafetyDeposit = () => {
     return (calculateProfit() - calculateShopifyFee()) * SAFETY_DEPOSIT_PERCENTAGE;
@@ -81,13 +86,13 @@ function App() {
   // Handler to copy the slip to clipboard
   const handleCopySlip = (e) => {
     e.preventDefault();
-    handleGetSlip(e);
+    handleGetSlip();
     navigator.clipboard.writeText(result);
   };
 
   const handlePrintPdf = () => {
     const profit = calculateProfit();
-    const pdfHtml = getSalesSlipPdfTemplate(profit, details, salesHistory);
+    const pdfHtml = getSalesSlipPdfTemplate(profit, details, salesHistory, calculateShopifyFee(), calculateSafetyDeposit(), calculateClaimableProfit());
     const printWindow = window.open("", "", "width=800,height=600");
     printWindow.document.write(pdfHtml);
     printWindow.document.close();
@@ -97,226 +102,140 @@ function App() {
 
   return (
     <>
-      <div className="container d-flex justify-content-center align-items-start vh-100 overflow-y-auto pt-5">
-        <div className="card shadow-sm" style={{ maxWidth: "700px", minWidth: "300px" }}>
-          <h1 className="card-header text-center">Generate Sales Slips</h1>
-          <div className="card-body">
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <FormField label="Title of Slip" type="text" name="title" value={details.title || ""} handleInputChange={handleInputChange} />
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-lg-6 col-sm-12">
-                <FormField label="Start Date" type="date" name="startDate" value={details.startDate || ""} handleInputChange={handleInputChange} />
-              </div>
-              <div className="col-lg-6 col-sm-12">
-                <FormField label="End Date" type="date" name="endDate" value={details.endDate || ""} handleInputChange={handleInputChange} />
-              </div>
-            </div>
-            <hr />
-            <button className="btn btn-success mb-3 w-100" data-bs-toggle="modal" data-bs-target="#salesModal">
-              <i className="bi bi-database-fill-add me-2"></i>Add New Sale
-            </button>
-            <div className="modal fade" id="salesModal" tabIndex="-1" aria-labelledby="salesModalLabel" aria-hidden="true">
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h1 className="modal-title fs-5" id="salesModalLabel">
-                      Add New Sale
-                    </h1>
-                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div className="modal-body">
-                    <div className="row g-3 mb-3">
-                      <div className="col-12">
-                        <FormField label="Order No." type="text" name="orderNumber" value={sale.orderNumber || ""} handleInputChange={handleSaleChange} />
-                      </div>
-                    </div>
-                    <div className="row g-3 mb-3">
-                      <div className="col-12">
-                        <FormField label="Shirts Count" type="number" name="shirtsCount" value={sale.shirtsCount || ""} handleInputChange={handleSaleChange} />
-                      </div>
-                    </div>
-                    <div className="row g-3 mb-3">
-                      <div className="col-12">
-                        <FormField label="Total Payable" type="number" name="totalPayable" value={sale.totalPayable || ""} handleInputChange={handleSaleChange} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
-                      Cancel
-                    </button>
-                    <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={calculateTotalSales}>
-                      Add Sale
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <FormField
-                  label="Total Sales"
-                  type="number"
-                  className="text-info"
-                  name="totalSales"
-                  value={(Array.isArray(details.totalSales) ? details.totalSales.reduce((acc, val) => acc + Number(val), 0) : details.totalSales) || ""}
-                  currency="PKR"
-                  handleInputChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <FormField label="Ads Spent" type="number" className="text-danger" name="totalAdsSpent" value={details.totalAdsSpent || ""} currency="PKR" handleInputChange={handleInputChange} />
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <FormField
-                  label="Shirts Cost"
-                  type="number"
-                  className="text-danger"
-                  name="totalShirtsCost"
-                  value={details.totalShirtsCost || ""}
-                  currency="PKR"
-                  handleInputChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <FormField
-                  label="Total Delivery Cost"
-                  type="number"
-                  className="text-warning"
-                  name="totalDeliveryCost"
-                  value={details.totalDeliveryCost || ""}
-                  currency="PKR"
-                  handleInputChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <FormField label="Print Cost" type="number" className="text-warning" name="totalPrintCost" value={details.totalPrintCost || ""} currency="PKR" handleInputChange={handleInputChange} />
-              </div>
-            </div>
-            <hr />
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <div className="input-group">
-                  <span className="input-group-text text-info">
-                    Total Profit
-                    <OverlayTrigger placement={"top"} delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Total Profit after deducting regular expenses.</Tooltip>}>
-                      <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
-                    </OverlayTrigger>
-                  </span>
-                  <input className="form-control" type="number" value={round(calculateProfit()) || ""} disabled readOnly />
-                  <span className="input-group-text">PKR</span>
-                </div>
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <div className="input-group">
-                  <span className="input-group-text text-warning">
-                    Shopify Fee
-                    <OverlayTrigger
-                      placement={"top"}
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={
-                        <Tooltip>
-                          Fee for Shopify Store, collected once every week. Should be about <strong>1,875PKR</strong> for stability.
-                        </Tooltip>
-                      }
-                    >
-                      <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
-                    </OverlayTrigger>
-                  </span>
-                  <input className="form-control" type="number" value={round(calculateShopifyFee()) || ""} disabled readOnly />
-                  <span className="input-group-text">PKR</span>
-                </div>
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <div className="input-group">
-                  <span className="input-group-text text-warning">
-                    Safety Deposit
-                    <OverlayTrigger
-                      placement={"top"}
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={
-                        <Tooltip>
-                          <strong>20%</strong> Fee collected as a safety measure, collected once every week. Important in case of unexpected expenses.
-                        </Tooltip>
-                      }
-                    >
-                      <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
-                    </OverlayTrigger>
-                  </span>
-                  <input className="form-control" type="number" value={round(calculateSafetyDeposit()) || ""} disabled readOnly />
-                  <span className="input-group-text">PKR</span>
-                </div>
-              </div>
-            </div>
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <div className="input-group">
-                  <span className="input-group-text text-success">
-                    Total Claimable Profit
-                    <OverlayTrigger
-                      placement={"top"}
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={
-                        <Tooltip>
-                          Final amount classed as <strong>Claimable Profit</strong>, which can be withdrawn by owners.
-                        </Tooltip>
-                      }
-                    >
-                      <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
-                    </OverlayTrigger>
-                  </span>
-                  <input className="form-control" type="number" value={round(calculateClaimableProfit()) || ""} disabled readOnly />
-                  <span className="input-group-text">PKR</span>
-                </div>
-              </div>
-            </div>
-            <button className="btn btn-primary me-2" onClick={handleGetSlip} data-bs-toggle="modal" data-bs-target="#textResultData">
-              Get Slip
-            </button>
-            <div className="modal fade" id="textResultData" tabIndex="-1" aria-labelledby="textResultDataLabel" aria-hidden="true">
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h1 className="modal-title fs-5" id="textResultDataLabel">
-                      Result
-                    </h1>
-                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div className="modal-body">
-                    <textarea className="form-control text-muted" rows="15" value={result} readOnly />
-                  </div>
-                  <div className="modal-footer">
-                    <OverlayTrigger placement={"top"} delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Copy to Clipboard.</Tooltip>}>
-                      <button className="btn btn-success me-2" onClick={handleCopySlip}>
-                        <i className="bi bi-copy"></i>
-                      </button>
-                    </OverlayTrigger>
-                    <OverlayTrigger placement={"top"} delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Export to PDF.</Tooltip>}>
-                      <button className="btn btn-secondary" onClick={handlePrintPdf}>
-                        <i className="bi bi-filetype-pdf"></i>
-                      </button>
-                    </OverlayTrigger>
-                  </div>
-                </div>
-              </div>
+      <div className="container d-flex justify-content-center align-items-start vh-100 pt-5">
+        <div className="shadow-sm" style={{ width: "600px" }}>
+          <h1 className="mb-2">Generate Sales Slips</h1>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Title of Slip" type="text" name="title" value={details.title || ""} handleInputChange={handleInputChange} />
             </div>
           </div>
-          <div className="card-footer">
+          <div className="row g-3 mb-3">
+            <div className="col-lg-6 col-sm-12">
+              <FormField label="Start Date" type="date" name="startDate" value={details.startDate || ""} handleInputChange={handleInputChange} />
+            </div>
+            <div className="col-lg-6 col-sm-12">
+              <FormField label="End Date" type="date" name="endDate" value={details.endDate || ""} handleInputChange={handleInputChange} />
+            </div>
+          </div>
+          <hr />
+          <div className="d-flex gap-3  mb-3">
+            <button className="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addSalesModal">
+              <i className="bi bi-database-fill-add me-2"></i>Add New Sale
+            </button>
+            <button className="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#salesModal">
+              <i className="bi bi-database-fill-add me-2"></i>View Added Sales
+            </button>
+          </div>
+          <AddSale sale={sale} handleSaleChange={handleSaleChange} calculateTotalSales={calculateTotalSales} />
+          <ViewSales sales={salesHistory} />
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField
+                label="Total Sales"
+                type="number"
+                className="text-info"
+                name="totalSales"
+                value={(Array.isArray(details.totalSales) ? details.totalSales.reduce((acc, val) => acc + Number(val), 0) : details.totalSales) || ""}
+                currency="PKR"
+                handleInputChange={handleInputChange}
+              />
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Ads Spent" type="number" className="text-danger" name="totalAdsSpent" value={details.totalAdsSpent || ""} currency="PKR" handleInputChange={handleInputChange} />
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Shirts Cost" type="number" className="text-danger" name="totalShirtsCost" value={details.totalShirtsCost || ""} currency="PKR" handleInputChange={handleInputChange} />
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField
+                label="Total Delivery Cost"
+                type="number"
+                className="text-warning"
+                name="totalDeliveryCost"
+                value={details.totalDeliveryCost || ""}
+                currency="PKR"
+                handleInputChange={handleInputChange}
+              />
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Print Cost" type="number" className="text-warning" name="totalPrintCost" value={details.totalPrintCost || ""} currency="PKR" handleInputChange={handleInputChange} />
+            </div>
+          </div>
+          <hr />
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Total Profit" type="number" className="text-info" name="totalPrintCost" value={round(calculateProfit()) || ""} currency="PKR" disabled>
+                <OverlayTrigger placement={"top"} delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Total Profit after deducting regular expenses.</Tooltip>}>
+                  <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
+                </OverlayTrigger>
+              </FormField>
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Shopify Fee" type="number" className="text-warning" name="shopifyFee" value={round(calculateShopifyFee()) || ""} currency="PKR" disabled>
+                <OverlayTrigger
+                  placement={"top"}
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={
+                    <Tooltip>
+                      Fee for Shopify Store, collected once every week. Should be about <strong>{round(calculateShopifyFee()) || "0"}PKR</strong> for stability.
+                    </Tooltip>
+                  }
+                >
+                  <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
+                </OverlayTrigger>
+              </FormField>
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Safety Deposit" type="number" className="text-warning" name="safetyDeposit" value={round(calculateSafetyDeposit()) || ""} currency="PKR" disabled>
+                <OverlayTrigger
+                  placement={"top"}
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={
+                    <Tooltip>
+                      <strong>20%</strong> Fee collected as a safety measure, collected once every week. Important in case of unexpected expenses.
+                    </Tooltip>
+                  }
+                >
+                  <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
+                </OverlayTrigger>
+              </FormField>
+            </div>
+          </div>
+          <div className="row g-3 mb-3">
+            <div className="col-12">
+              <FormField label="Total Claimable Profit" type="number" className="text-success" name="totalClaimableProfit" value={round(calculateClaimableProfit()) || ""} currency="PKR" disabled>
+                <OverlayTrigger
+                  placement={"top"}
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={
+                    <Tooltip>
+                      Final amount classed as <strong>Claimable Profit</strong>, which can be withdrawn by owners.
+                    </Tooltip>
+                  }
+                >
+                  <i className="bi bi-info-circle-fill ms-2" style={{ cursor: "pointer" }}></i>
+                </OverlayTrigger>
+              </FormField>
+            </div>
+          </div>
+          <button className="btn btn-primary me-2" onClick={handleGetSlip} data-bs-toggle="modal" data-bs-target="#textResultData">
+            Get Slip
+          </button>
+          <SaleText text={result} copyFunction={handleCopySlip} exportPdfFunction={handlePrintPdf} />
+          <div className="mt-3 pb-3">
             <p className="text-muted small mb-0">
               Made with ❤️ by{" "}
               <a href="https://github.com/Aarishmughal" target="_blank" rel="noopener noreferrer">
